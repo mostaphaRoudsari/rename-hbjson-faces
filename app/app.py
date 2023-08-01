@@ -1,17 +1,20 @@
 import streamlit as st
 from honeybee.model import Model
-import json
-from pollination_streamlit_io import get_hbjson
+from pollination_streamlit_io import get_hbjson, send_hbjson
 
 st.header('Rename room faces based on room name and orientation')
-st.write(
-    'This app takes an HBJSON file and rename the display name for faces based on '
-    'the room display name and the orientation of the face. You can download the new '
-    'version of the file.'
+st.info(
+    'This app takes a Pollination model and rename the display name for faces based on '
+    'the room display name and the orientation of the face.'
 )
-model = get_hbjson(key='my-model')
+
+model = get_hbjson(
+    key='get-po-model', label='Get Pollination Model',
+    options={'selection': {'selected': True}}
+)
+
 if model:
-    model = Model.from_dict(model['hbjson'])
+    model: Model = Model.from_dict(model['hbjson'])
     for room in model.rooms:
         st.write(f'Rename faces for: {room.display_name}')
         room_name = room.display_name
@@ -35,8 +38,15 @@ if model:
             for count, door in enumerate(face.doors):
                 door.display_name = f'{face.display_name}..{count}'
 
-    st.download_button(
-        'Download updated HBJSON file',
-        data=json.dumps(model.to_dict()),
-        file_name=f'{model.display_name}.hbjson'
+    st.success(
+        'The model faces are re-named. Use this button to either add the current model '
+        'to Rhino or replace the model in Rhino with the new model.'
+    )
+    send_hbjson(
+        key='send-po-model',
+        hbjson=model.to_dict(),
+        option='replace',
+        options={
+            'preview': False, 'clear': False, 'subscribe-preview': False
+        }
     )
